@@ -1,0 +1,90 @@
+const Joi=require('joi');
+const express=require('express');
+const app=express();
+app.use(express.json());//middleware for reading data from object in json form
+// creating sample data
+const genres=
+[
+    { id:1, genre:'Horror'},
+    { id:2, genre:'Romantic'},
+    { id:3, genre:'Thriller'},
+    { id:4, genre:'Drama'}
+];
+//creating end point to view the data via get request
+app.get('/api/genres',(req,res)=>
+{
+    res.send(genres);
+});
+//Accessing individual data
+app.get('/api/genres/:id',(req,res)=>
+{
+    const genre1=genres.find(a => a.id === parseInt(req.params.id));
+    if(!genre1)
+    {
+        res.status(400).send('Id does not exist, enter another ID')
+        return;
+    }
+    res.send(genre1);
+});
+// Creating data via POST request
+app.post('/api/genres',(req,res)=>
+{
+    const {error}=genreValidation(req.body);
+    if(error)
+    {
+        res.status(400).send('The genre should be present and more then 2 characters')
+        return;
+    }
+    const genre=
+    {
+        id:genres.length+1,
+        genre:req.body.genre
+    }
+    genres.push(genre);
+    res.send(genre);
+});
+// updating data via PUT request
+app.put('/api/genres/:id',(req,res)=>
+{
+    const genre1=genres.find(a => a.id === parseInt(req.params.id));
+    if(!genre1)
+    {
+        res.status(400).send('Id does not exist, enter another ID')
+        return;
+    }
+    const {error}=genreValidation(req.body);
+    if(error)
+    {
+        res.status(400).send('The genre should be present and more than 2 characters')
+        return;
+    }
+    genre1.genre=req.body.genre;
+    res.send(genre1);
+});
+// deleting data using DELETE
+app.delete('/api/genres/:id',(req,res)=>
+{
+    const course=genres.find(c => c.id === parseInt(req.params.id));
+    if(!course)
+    {
+    res.status(404).send('The Id does not exist');
+    return;
+    }
+    //first check index then delete using splice
+    const index=genres.indexOf(course);
+    genres.splice(index,1);
+    res.send(course); //this is deleted
+})
+
+//function for Joi
+function genreValidation(genre)
+{
+    const schema=Joi.object({
+        genre:Joi.string().min(2).required()
+    });
+    return schema.validate(genre);
+}
+
+// Listening to request on port 3000 via enviroment variable
+const port=process.env.PORT || 3000;
+app.listen(port,()=> console.log(`Listening on port ${port}`));
